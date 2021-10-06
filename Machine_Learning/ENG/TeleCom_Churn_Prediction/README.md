@@ -10,7 +10,7 @@ The task of predicting churn is one of the most important subtasks in the field 
 
 ### Project Goal
 The goal of the project is to **learn how to find users prone to churn.** If you learn to find such users with sufficient accuracy in advance, you can effectively manage the churn:
-  - Identify the reasons for the chur
+  - Identify the reasons for the churn
   - Help users at risk to solve their problems and tasks
   - Run retention campaigns
 
