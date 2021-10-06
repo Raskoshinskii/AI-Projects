@@ -1,6 +1,6 @@
 ### TeleCom Churn Prediction 
 ### Project Description
-The data for the competition was provided by the French telecommunications company Orange. The problem deals with customer data, so the data was preliminarily anonymized: any personal information that allows identifying users was removed from the dataset, and the names and descriptions of the features intended for making forecasts were not provided.
+The data for the current project has been obtained from a competition that was provided by the French telecommunications company Orange. The problem deals with customer data, so the data was preliminarily anonymized: any personal information that allows identifying users was removed from the dataset, and the names and descriptions of the features intended for making forecasts were not provided.
 
 In the project, we are going to deal with a small dataset. It consists of 50 thousand objects and includes 230 features:
   - 190 Numeric Features 
@@ -14,15 +14,15 @@ The goal of the project is to **learn how to find users prone to churn.** If you
   - Help users at risk to solve their problems and tasks
   - Run retention campaigns
 
-In terms of a Machine learning, we have to build predictive models - models that predict the likelihood that a user will leave the service. In the classical setting, probabilistic binary classification models are built, where the target class is users leaving the service. **The probability that the user belongs to the target class is the target value** - the probability of churn. Accordingly, the greater this probability, the more chances that the user will refuse to use our service.
+In terms of Machine Learning, we have to build predictive models - models that predict the likelihood that a user will leave the service. In the classical setting, probabilistic binary classification models are built, where the target class is users leaving the service. **The probability that the user belongs to the target class is the target value** - the probability of churn. Accordingly, the greater this probability, the more chances that the user will refuse to use our service.
 
 ### Project Tasks 
 The following tasks were formulated to achieve the goal:
-  1) Exploratary Data Analysis: features, size,  identification of patterns and structure in the data
+  1) Exploratory Data Analysis: features, size,  identification of patterns and structure in the data
   2) Feature Selection: determine the relevant features to classify users who will "leave" or "stay"
-  3) Data Preprocessing: determine the best way to process features (e.g. imuters, categorical encoders) and dealing with class imbalance (e.g. Random Over/Undersampling, SMOTE, etc.)
+  3) Data Preprocessing: determine the best way to process the features (e.g. imputers, categorical encoders) and dealing with class imbalance (e.g. Random Over/Undersampling, SMOTE, etc.)
   4) Model Selection: determine a model that would best cope with the stated objective of the project
-  5) Model Optimization: detrmine an optimal model hyperparameters, providing the best classification quality
+  5) Model Optimization: determine optimal model hyperparameters, providing the best classification quality
 
 ### Project Metrics
 There is no need to determine a metric for the competition because it is already given: `ROC-AUC`. However, we will also use auxiliary metrics such as `Precision` and `Recall` to track `False Positive` and `False Negative` as well as `F1-Score`
@@ -30,7 +30,7 @@ There is no need to determine a metric for the competition because it is already
 All the metrcis were computed using `StratifiedCrossValidation (n_folds = 5)`
 
 ### Project Pipeline
-It order to conduct fast and robust (i.e. no data leakage) features processing the following `Pipeline` was defined:
+In order to conduct fast and robust (i.e. no data leakage) features processing the following `Pipeline` was defined:
 
 ![Untitled Diagram (7)](https://user-images.githubusercontent.com/56967765/136209077-1b45bc64-186e-4216-bb8a-9e360f2ef034.png)
 
@@ -77,7 +77,7 @@ The BoxPlot of numerical features was analyzed where it was found that the featu
 ### Learning Curves
 At the initial stage, it was necessary to find out **if there is enough data for the model** and how the model copes with the classification. For this purpose, learning curves were built. Without feature selection "as is", the model had a problem with **High Variance**. To further improve the quality of the model, it would be necessary:
   - Collect more data (which is impossible)
-  - Simplify the model, coduct feature selection
+  - Simplify the model, conduct feature selection
   - Apply regularization
 
 This is how the **learning curves looked like without feature selection:**
@@ -139,6 +139,6 @@ In the final decision, it was interesting to look at the importance of the featu
 ### Model Hyperparameters Optimization
 The final model is: `Gradient Boosting Classifier`
 
-The selection of model hyperparameters was carried out using the **Bayesian approach**, using the module `HyperOpt`. The number of parameters for the model is large, so using the standard `GridSearchCV` would be very **time consuming.** The hyperparameter tweak only slightly improved the quality. The quality of the final solution was `ROC-AUC: 0.7364 (CV)`
+The selection of model hyperparameters was carried out using the **Bayesian approach**, using the module `HyperOpt`. The number of parameters for the model is large, so using the standard `GridSearchCV` would be very **time-consuming.** The hyperparameter tweak only slightly improved the quality. The quality of the final solution was `ROC-AUC: 0.7364 (CV)`
 
 Switching to `CatBoost` and optimizing its hyperparameters allowed to take (currently <a href='https://www.kaggle.com/c/telecom-clients-prediction2/leaderboard'>7th place</a> with the score: `0.73128`) 
