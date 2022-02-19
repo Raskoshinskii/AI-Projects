@@ -236,7 +236,6 @@ def get_series_data(file_path, start_date, end_date, unique_districts, get_month
     DataFrames
         One DataFrame with only n_trips and mean n_trips for within a month if get_monthly_avg=True
     """ 
-
     # List of required files
     os.chdir(file_path)
     files_to_process = get_file_names(date_start=start_date, date_end=end_date)
