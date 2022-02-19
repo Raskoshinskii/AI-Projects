@@ -23,9 +23,7 @@ def get_file_names(date_start, date_end):
         List with file names for specified period
     """
     files = os.listdir()
-    
     result = []
-    
     for file in files:
         file_date = file.split('.')[0].split('_')[-1]
         if file_date >= date_start and file_date <= date_end:
@@ -81,7 +79,6 @@ def filter_data(f_name, unique_districts):
     DataFrame
         Preprocessed DataFrame
     """
-
     data = pd.read_csv(f_name, parse_dates=['tpep_pickup_datetime', 'tpep_dropoff_datetime'])
 
     # Исключаем зоны для которых нет polygon_data
@@ -136,7 +133,6 @@ def fill_missing_dates(df, unique_districts):
     DataFrame
         DataFrame with no missing dates
     """
-
     # Определяем уникальные даты текущего DF, берем начало и конец
     unique_dates = pd.to_datetime(df['tpep_pickup_datetime'].unique())
     dt_start = unique_dates[0]
@@ -159,7 +155,6 @@ def fill_missing_dates(df, unique_districts):
             'PULocationID': rand_districts,
             'n_trips': [0]*len(rand_districts)
         }))
-        
         return df.sort_values('tpep_pickup_datetime').reset_index(drop=True)
     return df
 
@@ -178,7 +173,6 @@ def fill_missing_districts_hours_pairs(df, unique_districts):
     DataFrame
         DataFrame with no missing hour-district pairs
     """
-
     unique_dates = pd.to_datetime(df['tpep_pickup_datetime'].unique())
     for date in unique_dates:
         not_missing_districts = set(df[df['tpep_pickup_datetime'] == date]['PULocationID'])
@@ -218,7 +212,6 @@ def get_mean_trip_hourly(df):
     DataFrame
         DataFrame with hourly mean n_trips for a certain month  
     """
-
     out_df = df.copy()
     
     # Извлекаем часы, так как по дате и времени сгруппировать не получитсся - все даты уникальные
@@ -250,7 +243,6 @@ def get_series_data(file_path, start_date, end_date, unique_districts, get_month
     DataFrames
         One DataFrame with only n_trips and mean n_trips for within a month if get_monthly_avg=True
     """ 
-
     # Список необходимых файлов 
     os.chdir(file_path)
     files_to_process = get_file_names(date_start=start_date, date_end=end_date)

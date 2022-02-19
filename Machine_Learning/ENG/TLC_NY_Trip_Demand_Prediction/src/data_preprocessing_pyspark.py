@@ -13,7 +13,6 @@ import warnings
 import os
 
 from tqdm import tqdm
-
 warnings.filterwarnings('ignore')
 
 
@@ -35,7 +34,6 @@ def get_values(df_col, col_name):
     List
         Column values list 
     """
-
     values = [x[col_name] for x in df_col]
     return values
 
@@ -53,7 +51,6 @@ def copy_spark_df(spark_df, schema):
     DataFrame
         Copy of Spark DataFrame
     """
-
     pandas_df = spark_df.toPandas()
     copy_df = spark.createDataFrame(pandas_df,schema=schema)
     del pandas_df
@@ -72,12 +69,9 @@ def get_file_names(date_start, date_end):
     -------
     List
         List with file names for specified period
-    
     """
     files = os.listdir()
-    
     result = []
-    
     for file in files:
         file_date = file.split('.')[0].split('_')[-1]
         if file_date >= date_start and file_date <= date_end:
@@ -100,16 +94,12 @@ def process_polygon_data(f_name, file_path):
         Preprocessed GeoDataFrame
     """
     os.chdir(file_path)
-
     polygon_data = gpd.read_file(f_name)
     col_to_use = polygon_data.columns.to_list()[-4:]
     polygon_data = polygon_data[col_to_use]
-
     polygon_data['location_id'] = polygon_data['location_id'].apply(pd.to_numeric)
-
     polygon_data = polygon_data.sort_values(by='location_id').reset_index(drop=True)
     polygon_data
-    
     polygon_data.loc[56, 'location_id'] = 57
     polygon_data.loc[103, 'location_id'] = 104
     polygon_data.loc[104, 'location_id'] = 105

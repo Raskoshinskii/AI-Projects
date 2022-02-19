@@ -22,9 +22,7 @@ def get_file_names(date_start, date_end):
         List with file names for specified period
     """
     files = os.listdir()
-    
     result = []
-    
     for file in files:
         file_date = file.split('.')[0].split('_')[-1]
         if file_date >= date_start and file_date <= date_end:
@@ -77,7 +75,6 @@ def filter_data(f_name, unique_districts):
     DataFrame
         Preprocessed DataFrame
     """
-
     data = pd.read_csv(f_name, parse_dates=['tpep_pickup_datetime', 'tpep_dropoff_datetime'])
 
     # Exclude districts with no polygon_data
@@ -131,7 +128,6 @@ def fill_missing_dates(df, unique_districts):
     DataFrame
         DataFrame with no missing dates
     """
-
     # Determine the unique dates of the current DF, take the beginning and end
     unique_dates = pd.to_datetime(df['tpep_pickup_datetime'].unique())
     dt_start = unique_dates[0]
@@ -154,7 +150,6 @@ def fill_missing_dates(df, unique_districts):
             'PULocationID': rand_districts,
             'n_trips': [0]*len(rand_districts)
         }))
-        
         return df.sort_values('tpep_pickup_datetime').reset_index(drop=True)
     return df
 
@@ -172,7 +167,6 @@ def fill_missing_districts_hours_pairs(df, unique_districts):
     DataFrame
         DataFrame with no missing hour-district pairs
     """
-
     unique_dates = pd.to_datetime(df['tpep_pickup_datetime'].unique())
     for date in unique_dates:
         not_missing_districts = set(df[df['tpep_pickup_datetime'] == date]['PULocationID'])
@@ -210,7 +204,6 @@ def get_mean_trip_hourly(df):
     DataFrame
         DataFrame with hourly mean n_trips for a certain month  
     """
-
     out_df = df.copy()
     
     # Extract the hours, since it will not be possible to group by date and time - all dates are unique
@@ -269,7 +262,6 @@ def get_series_data(file_path, start_date, end_date, unique_districts, get_month
         if get_monthly_avg:
             data_monthly_avg = get_mean_trip_hourly(data)
             mean_trips_df = mean_trips_df.append(data_monthly_avg)
-    
     # Redefine the index
     trips_df = trips_df.sort_values('tpep_pickup_datetime').reset_index(drop=True)
     mean_trips_df = mean_trips_df.sort_values('date').reset_index(drop=True)

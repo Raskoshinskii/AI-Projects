@@ -20,7 +20,6 @@ def plot_series(series, city_zone=230):
     -------
     None 
     """
-
     plt.figure(figsize=(16,5))
     plt.grid(True)
     plt.title(f'N_Trips in {city_zone}')
@@ -42,7 +41,6 @@ def plot_decomposition(series, figsize = (12, 9), grid=True):
     -------
     None
     """
-
     ts_compnts = sm.tsa.seasonal_decompose(series)
     titles = ['Origianl', 'Trend', 'Seasonal', 'Resid']
 
@@ -73,7 +71,6 @@ def plot_acf_pacf(series, lags=30, figsize=(12, 7)):
     -------
     None
     """
-
     plt.figure(figsize=figsize)
     ax = plt.subplot(211)
     sm.graphics.tsa.plot_acf(series.values, lags=lags, ax=ax)
@@ -95,14 +92,12 @@ def plot_cluster_ts(current_cluster):
     -------
     None 
     """
-
     fig, ax = plt.subplots(
         int(np.ceil(current_cluster.shape[0]/4)),4,
         figsize=(45, 3*int(np.ceil(current_cluster.shape[0]/4)))
     )
     fig.autofmt_xdate(rotation=45)
     ax = ax.reshape(-1)
-    
     for indx, series in enumerate(current_cluster):
         ax[indx].plot(series)
         plt.xticks(rotation=45)
@@ -126,7 +121,6 @@ def plot_clusters(data, cluster_model, dim_red_algo):
     -------
     None
     """
-
     cluster_labels = cluster_model.fit_predict(data)
     centroids = cluster_model.cluster_centers_
     u_labels = np.unique(cluster_labels)
@@ -169,7 +163,6 @@ def plot_dendrogram(data, model, figsize=(16,10), **kwargs):
     -------
     None 
     """
-
     model.fit(data)
     counts = np.zeros(model.children_.shape[0])
     n_samples = len(model.labels_)

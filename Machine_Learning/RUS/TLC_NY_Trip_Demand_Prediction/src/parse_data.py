@@ -22,6 +22,7 @@ def get_page_data(url):
     response = requests.post(url, headers = header)
     return BeautifulSoup(response.text, 'lxml')
 
+
 def download_data(year_start, year_end, url, folder_name):
     """
     Downloads links for csv files. Each link is passed into pandas and read
@@ -41,17 +42,14 @@ def download_data(year_start, year_end, url, folder_name):
     None 
         Downloads files and save them into a provided directory using pandas
     """
-
     data_links = []
     years = np.arange(year_start, year_end + 1, 1)
     os.mkdir(folder_name)
-    
     html = get_page_data(url)
     for year in years:
         # Extract links 
         for monthly_data in html.select_one(f'#faq{year}').find_all('ul'):
-            data_links.append(monthly_data.find_all('a', href=True)[0]['href'])
-                    
+            data_links.append(monthly_data.find_all('a', href=True)[0]['href'])      
     # Download a file 
     for link in tqdm(data_links):
         current_file_name = link.split('/')[-1]

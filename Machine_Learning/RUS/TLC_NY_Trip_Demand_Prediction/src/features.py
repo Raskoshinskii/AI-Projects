@@ -44,7 +44,6 @@ def get_time_features(series, is_cyclical_encoding=False):
     -------
     DataFrame with time features 
     """
-
     features_df = series.copy() # чтобы не изменять исходный series
     
     # Признаки времени (числа)
@@ -117,7 +116,6 @@ def show_features_importances(model, features, n_splits, scoring, cluster_indx, 
     -------
     None 
     """
-
     # Данные для обучения 
     X_train = features.drop(columns=target_col_name)
     y_train = features[target_col_name]

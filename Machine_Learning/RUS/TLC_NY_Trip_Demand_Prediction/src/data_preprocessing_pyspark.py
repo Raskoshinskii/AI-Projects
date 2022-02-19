@@ -13,7 +13,6 @@ import warnings
 import os
 
 from tqdm import tqdm
-
 warnings.filterwarnings('ignore')
 
 
@@ -37,7 +36,6 @@ def get_values(df_col, col_name):
     List
         Column values list 
     """
-
     values = [x[col_name] for x in df_col]
     return values
 
@@ -56,7 +54,6 @@ def copy_spark_df(spark_df, schema):
     DataFrame
         Copy of Spark DataFrame
     """
-
     pandas_df = spark_df.toPandas()
     copy_df = spark.createDataFrame(pandas_df,schema=schema)
     del pandas_df
@@ -76,12 +73,9 @@ def get_file_names(date_start, date_end):
     -------
     List
         List with file names for specified period
-    
     """
     files = os.listdir()
-    
     result = []
-    
     for file in files:
         file_date = file.split('.')[0].split('_')[-1]
         if file_date >= date_start and file_date <= date_end:
@@ -104,7 +98,6 @@ def process_polygon_data(f_name, file_path):
         Preprocessed GeoDataFrame
     """
     os.chdir(file_path)
-
     # Загружаем зоны такси с геометрией 
     polygon_data = gpd.read_file(f_name)
     col_to_use = polygon_data.columns.to_list()[-4:]
@@ -138,7 +131,6 @@ def filter_data(f_name, unique_districts):
     DataFrame
         Preprocessed Spark DataFrame
     """
-
     # Чтение данных 
     data = spark.read.csv(f_name, header=True, inferSchema=True)
     
@@ -201,7 +193,6 @@ def fill_missing_dates(df, unique_districts):
     DataFrame
         Spark DataFrame with no missing dates
     """
-
     # Определяем уникальные даты текущего DF, берем начало и конец
     unique_dates = df.select('tpep_pickup_datetime').distinct().orderBy('tpep_pickup_datetime').collect()
     unique_dates = list(map(lambda x: x['tpep_pickup_datetime'], unique_dates))
@@ -225,7 +216,6 @@ def fill_missing_dates(df, unique_districts):
             'PULocationID': rand_districts,
             'n_trips': [0]*len(rand_districts)
         })
-        
         spark_df = spark.createDataFrame(pandas_df)
         df = df.union(spark_df) # столбцы должны совпадать
     return df.orderBy('tpep_pickup_datetime')
@@ -245,7 +235,6 @@ def fill_missing_districts_hours_pairs(df, unique_districts):
     DataFrame
         Spark DataFrame with no missing hour-district pairs
     """
-
     unique_dates = df.select('tpep_pickup_datetime').distinct().collect()
     unique_dates = list(map(lambda x: x['tpep_pickup_datetime'], unique_dates))
     for date in unique_dates:
@@ -259,7 +248,6 @@ def fill_missing_districts_hours_pairs(df, unique_districts):
                 'PULocationID': list(missing_districts),
                 'n_trips': [0]*len(missing_districts)
             })
-            
             spark_df = spark.createDataFrame(pandas_df)
             df = df.union(spark_df)
     return df.orderBy('tpep_pickup_datetime')
@@ -291,7 +279,6 @@ def get_mean_trip_hourly(df):
     DataFrame
         Spark DataFrame with hourly mean n_trips for a certain month  
     """
-
     # Из даты убираем день, чтобы получить среднее число поездок в час за месяц
     df = df.withColumn('datetime', date_format(F.col('tpep_pickup_datetime'), 'yyyy-MM HH:mm:ss'))
     df = df.drop('tpep_pickup_datetime')
@@ -318,7 +305,6 @@ def create_schema(columns, types, is_nullabel):
     Schema
         Spark DataFrame Schema 
     """
-
     col_types = []
     for i, col in enumerate(columns):
         col_types.append(StructField(col, types[i], is_nullabel[i]))
@@ -343,7 +329,6 @@ def get_series_data(file_path, start_date, end_date, unique_districts, get_month
     DataFrames
         One DataFrame with only n_trips and mean n_trips for within a month if get_monthly_avg=True
     """
-
     # Список необходимых файлов 
     os.chdir(file_path)
     files_to_process = get_file_names(date_start=start_date, date_end=end_date)
