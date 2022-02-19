@@ -8,7 +8,6 @@ from tqdm import tqdm
 warnings.filterwarnings('ignore')
 
 
-# Получение имен файлов за интересующий период 
 def get_file_names(date_start, date_end):
     """
     Iterates over all files and returns only files for provided period 
@@ -33,7 +32,6 @@ def get_file_names(date_start, date_end):
     return result
 
 
-# Preprocessing для файла с геометрией 
 def preprocess_polygon_data(f_name, file_path):
     """
     Preprocesses GeoDataFrame
@@ -48,26 +46,24 @@ def preprocess_polygon_data(f_name, file_path):
         Preprocessed GeoDataFrame
     """
     os.chdir(file_path)
-
-    # Загружаем зоны такси с геометрией 
+    # Download districts with geometry
     polygon_data = gpd.read_file(f_name)
     col_to_use = polygon_data.columns.to_list()[-4:]
     polygon_data = polygon_data[col_to_use]
 
-    # Изменяем тип location_id на int 
+    # Change type location_id 
     polygon_data['location_id'] = polygon_data['location_id'].apply(pd.to_numeric)
 
-    # Сортируем location_id
+    # Sort location_id
     polygon_data = polygon_data.sort_values(by='location_id').reset_index(drop=True)
     
-    # Исправляем location_id
+    # Fix location_id
     polygon_data.loc[56, 'location_id'] = 57
     polygon_data.loc[103, 'location_id'] = 104
     polygon_data.loc[104, 'location_id'] = 105
     return polygon_data
 
 
-# Фильтрация и отбор данных 
 def filter_data(f_name, unique_districts):
     """
     Runs the main preprocessing for a Trips DataFrame 
@@ -84,44 +80,43 @@ def filter_data(f_name, unique_districts):
 
     data = pd.read_csv(f_name, parse_dates=['tpep_pickup_datetime', 'tpep_dropoff_datetime'])
 
-    # Исключаем зоны для которых нет polygon_data
+    # Exclude districts with no polygon_data
     data = data[data['PULocationID'].isin(unique_districts)]
 
-    # Исключаем нулевое количество пассажиров (0 или NaN)
+    # Exclude zero number of passengers (0 or NaN)
     data = data[data['passenger_count'] != 0]
     data = data[~data['passenger_count'].isnull()]
 
-    # Исключаем нулевое расстояние 
+    # Exclude zero distance 
     data = data[data['trip_distance'] != 0]
 
-    # Исключаем нулевую длительность поездки а также поездки меньше 35c
+    # Exclude the zero trip duration and trips less than 35c
     temp_series = (data['tpep_dropoff_datetime'] - data['tpep_pickup_datetime'])
     res_indecies = temp_series[temp_series > pd.Timedelta("35 s")].index
     data = data.loc[res_indecies, :]
     
-    # Удаляем дубликаты tpep_pickup_datetime
+    # Drop duplicates for tpep_pickup_datetime
     data = data[~data[['tpep_pickup_datetime']].duplicated()]
     
-    # Отбрасываем минуты и секунды во времени начала поездки (понадобится позже для агрегации)
+    # Discard minutes and seconds in the start time of the trip (it will be needed later for aggregation)
     data = data.assign(tpep_pickup_datetime=pd.to_datetime(data['tpep_pickup_datetime'].dt.date) +
                         pd.to_timedelta(data['tpep_pickup_datetime'].dt.hour, unit='H'))
     
-    # Число пасссажиров не должно превышать 6 человек
+    # The number of passengers must not exceed 6 people
     data = data[~(data['passenger_count'] > 6)]
     
-    # Отбираем правильные RatecodeID 
+    # Select only valid RatecodeID 
     unique_rate_codes = np.arange(1,7)
     rate_codes_to_drop = [code for code in data.RatecodeID.unique() if code not in unique_rate_codes]
     data = data[~(data['RatecodeID'].isin(rate_codes_to_drop))]
     
-    # Даты не должны выходить за пределы текущей
+    # Dates must not be outside the current
     curr_year = int(f_name.split('.')[0].split('_')[-1].split('-')[0])
     curr_month = int(f_name.split('.')[0].split('_')[-1].split('-')[1])
     data = data.loc[(data.tpep_pickup_datetime.dt.year == curr_year) & (data.tpep_pickup_datetime.dt.month == curr_month)]
     return data
 
 
-# Обработка пропусков в ряде (некоторые файлы имеют пропуски дат)
 def fill_missing_dates(df, unique_districts):
     """
     Determines wether a data has missing dates. 
@@ -137,21 +132,21 @@ def fill_missing_dates(df, unique_districts):
         DataFrame with no missing dates
     """
 
-    # Определяем уникальные даты текущего DF, берем начало и конец
+    # Determine the unique dates of the current DF, take the beginning and end
     unique_dates = pd.to_datetime(df['tpep_pickup_datetime'].unique())
     dt_start = unique_dates[0]
     dt_end = unique_dates[-1]
     
-    # Генерируем список всех дат с интревалом в час - это все даты которые должны быть
+    # Generate a list of all dates with an interval of an hour - these are all the dates that should be
     all_dates = set(pd.date_range(dt_start, dt_end, freq = 'h'))
     df_dates = set(unique_dates) # множество дат в текущем DF
     missing_dates = all_dates.difference(df_dates) # определяем пропущенные даты 
     
-    # Пропущенные даты заполняем случайными районами
+    # Missing dates are filled with random districts
     missing_dates_len = len(missing_dates)
     rand_districts = np.random.choice(list(unique_districts), missing_dates_len)
     
-    # Добавляем пропущенные даты 
+    # Add missing dates
     if missing_dates:
         print('Missing Date Found: ', missing_dates)
         df = df.append(pd.DataFrame({
@@ -164,7 +159,6 @@ def fill_missing_dates(df, unique_districts):
     return df
 
 
-# Заполянем отсутствующие пары час-регион (т.е. в каждом часе должны быть все районы города)
 def fill_missing_districts_hours_pairs(df, unique_districts):
     """
     Fills mising hour-district pairs with n_trips = 0 value 
@@ -193,7 +187,6 @@ def fill_missing_districts_hours_pairs(df, unique_districts):
     return df.sort_values('tpep_pickup_datetime').reset_index(drop=True)
 
 
-# Провекрка корректности заполнения fill_missing_districts_hours_pairs() 
 def check_missing_districts_hours_pairs(df, unique_districts_len=263):
     """
     df: pd.DataFrame
@@ -208,7 +201,6 @@ def check_missing_districts_hours_pairs(df, unique_districts_len=263):
     assert df['tpep_pickup_datetime'].unique().shape[0]*unique_districts_len == df.shape[0]
 
 
-# Получение среднего числа поездок в конкретный час за месяц 
 def get_mean_trip_hourly(df):
     """
     df: pd.DataFrame
@@ -221,18 +213,19 @@ def get_mean_trip_hourly(df):
 
     out_df = df.copy()
     
-    # Извлекаем часы, так как по дате и времени сгруппировать не получитсся - все даты уникальные
+    # Extract the hours, since it will not be possible to group by date and time - all dates are unique
     out_df['hour'] = df['tpep_pickup_datetime'].dt.time
     out_df = out_df.groupby(['hour', 'PULocationID'])['n_trips'].mean().reset_index(name='mean_n_trips')
     out_df['mean_n_trips'] = round(out_df['mean_n_trips'])
     
-    # Добавляем дату в формате (YYYY-MM-HH:MM:SS) / совершаем обратную операцию
+    # Add a date in the format (YYYY-MM-HH:MM:SS) / perform the reverse operation
     dates = df['tpep_pickup_datetime'].map(lambda x: x.strftime('%Y-%m'))
     out_df['date'] = pd.to_datetime(dates + ' ' + out_df['hour'].astype('str'))
     out_df.drop(columns=['hour'], inplace=True)
     return out_df
 
-# Основной Preprocessing Pipeline
+
+# Mai Preprocessing Pipeline
 def get_series_data(file_path, start_date, end_date, unique_districts, get_monthly_avg=True):
     """
     file_path: str
@@ -251,33 +244,33 @@ def get_series_data(file_path, start_date, end_date, unique_districts, get_month
         One DataFrame with only n_trips and mean n_trips for within a month if get_monthly_avg=True
     """ 
 
-    # Список необходимых файлов 
+    # List of required files
     os.chdir(file_path)
     files_to_process = get_file_names(date_start=start_date, date_end=end_date)
     
-    # Результирующие DF's
-    trips_df = pd.DataFrame() # число поездок на конкретную дату в конкретном районе города 
-    mean_trips_df =  pd.DataFrame() # среднее число поездок в час в конкретном районе города за месяц
+    # Resulting DF's
+    trips_df = pd.DataFrame() # number of trips on a specific date in a specific district of the city
+    mean_trips_df =  pd.DataFrame() # average number of trips per hour in a particular district of the city per month
     
-    # Основной Pipeline
+    # Main Pipeline
     for file in tqdm(files_to_process):
-        # 1. Фильтрация данных 
+        # 1. Dat Filtering 
         data = filter_data(f_name=file, unique_districts=unique_districts)
-        # 2. Аггрегация/Группировка
+        # 2. Aggregation
         data = data.groupby(['tpep_pickup_datetime', 'PULocationID']).size().reset_index(name='n_trips')
-        # 3. Заполнение пропущенных дат 
+        # 3. Missing Dates Filling 
         data = fill_missing_dates(df=data, unique_districts=unique_districts)
-        # 4. Заполнение отсутствующей пары час-регион и проверка 
+        # 4. Fill in the missing hour-district pair and check
         data = fill_missing_districts_hours_pairs(df=data, unique_districts=unique_districts)
         check_missing_districts_hours_pairs(df=data)
-        # 5. Добавляем обработанные данные за месяц в результирующий DF
+        # 5. Add the processed data for the month to the resulting DF
         trips_df = trips_df.append(data)
-        # Если нам нужны средние показатели в час по месяцам для каждого района города 
+        # If we need averages per hour by month for each district of the city
         if get_monthly_avg:
             data_monthly_avg = get_mean_trip_hourly(data)
             mean_trips_df = mean_trips_df.append(data_monthly_avg)
     
-    # Переопределяем индекс
+    # Redefine the index
     trips_df = trips_df.sort_values('tpep_pickup_datetime').reset_index(drop=True)
     mean_trips_df = mean_trips_df.sort_values('date').reset_index(drop=True)
     return trips_df, mean_trips_df

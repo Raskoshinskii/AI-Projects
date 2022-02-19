@@ -7,9 +7,11 @@ import seaborn as sns
 from sklearn.model_selection import cross_val_score, TimeSeriesSplit
 from sklearn.decomposition import PCA 
 
-# Учет цикличности данных (sin)
+
 def sin_transform(values):
     """
+    Takes into account cyclic nature of a feature
+
     values: pd.DataFrame or pd.Series
         Values to get sin harmonics for 
     Returns:
@@ -18,7 +20,7 @@ def sin_transform(values):
     """
     return np.sin(2*np.pi*values/len(set(values)))
 
-# Учет цикличности данных (cos)
+
 def cos_transform(values):
     """
     values: pd.DataFrame or pd.Series
@@ -29,7 +31,7 @@ def cos_transform(values):
     """
     return np.cos(2*np.pi*values/len(set(values)))
 
-# Извлекаем Час, День Недели, Месяц...
+
 def get_time_features(series, is_cyclical_encoding=False):
     """
     Note:
@@ -45,41 +47,34 @@ def get_time_features(series, is_cyclical_encoding=False):
     DataFrame with time features 
     """
 
-    features_df = series.copy() # чтобы не изменять исходный series
+    features_df = series.copy() 
     
-    # Признаки времени (числа)
     features_df['hour'] = features_df.index.hour
     features_df['day_of_month'] = features_df.index.day
 #     features_df['week_of_year'] = features_df.index.weekofyear
     
-    # Признаки времени (названия - строки)
     features_df['day_name'] = features_df.index.day_name()
 #     features_df['month_name'] = features_df.index.month_name()
     
-    if is_cyclical_encoding: # учет цикличности времени 
+    if is_cyclical_encoding:
         features_df['sin_hour'] = sin_transform(features_df['hour'])
         features_df['cos_hour'] = cos_transform(features_df['hour'])
         
         features_df['sin_week_of_year'] = sin_transform(features_df['week_of_year'])
         features_df['cos_week_of_year'] = cos_transform(features_df['week_of_year'])
-        
-        # Предыдущие признаки избыточны (мы их трансформировали/закодировали в новые)
         features_df.drop(['hour', 'week_of_year'], axis=1, inplace=True)
-    
-    # Выходной и Праздники (Бинарные)
+
     features_df['is_weekend'] = features_df.index.weekday.isin([5,6])*1 # Умножаем на 1 чтобы получить 0/1 вместо True/False
     holidays = USFederalHolidayCalendar().holidays(start=features_df.index.min(), end=features_df.index.max()).floor('1D')
     features_df['is_holiday'] = features_df.index.floor('1D').isin(holidays)*1
     
-    # Рабочий час (Рабочими часми считаем 8:00-18:30 кроме обеда c 11:30-13:00)
     lunch_time = pd.date_range('12:00:00', '13:00:00', freq='h').time
     working_hours = pd.date_range('8:00:00', '19:00:00', freq='h').time
     working_hours = set(working_hours) - set(lunch_time)
-    # Используем скобки т.к. индексы не совпадают 
+
     features_df['is_working_hour'] = (features_df.reset_index()['tpep_pickup_datetime'].apply(lambda x: x.time() in working_hours)*1).values
     features_df['is_lunch_time'] = (features_df.reset_index()['tpep_pickup_datetime'].apply(lambda x: x.time() in lunch_time)*1).values
     
-    # Начало/Конец месяца, квартала, года 
     features_df['is_month_start'] = features_df.index.is_month_start*1
     features_df['is_month_end'] = features_df.index.is_month_end*1
     features_df['is_quarter_start'] = features_df.index.is_quarter_start*1
@@ -87,16 +82,14 @@ def get_time_features(series, is_cyclical_encoding=False):
 #     features_df['is_year_start'] = features_df.index.is_year_start*1
 #     features_df['is_year_end'] = features_df.index.is_year_end*1
     
-    # Время года 
 #     seasons = {1:'Winter', 2:'Spring', 3:'Summer', 4:'Autumn'}
 #     features_df['season'] = ((features_df.index.month % 12 + 3)//3).map(seasons)
     
-#     # Кодирование Категорий
     ohe_columns = ['day_name']
     features_df = pd.get_dummies(features_df, columns=ohe_columns, drop_first=True)
     return features_df 
 
-# Визуализация важности признаков для модели в кластере 
+
 def show_features_importances(model, features, n_splits, scoring, cluster_indx, target_col_name='n_trips'):
     """
     Plots feature importance for a given cluster
@@ -118,11 +111,9 @@ def show_features_importances(model, features, n_splits, scoring, cluster_indx, 
     None 
     """
 
-    # Данные для обучения 
     X_train = features.drop(columns=target_col_name)
     y_train = features[target_col_name]
 
-    # TS кросс-валидация 
     cv = cross_val_score(model, X_train, y_train,
                         cv=TimeSeriesSplit(n_splits),
                         scoring=scoring,
@@ -137,7 +128,6 @@ def show_features_importances(model, features, n_splits, scoring, cluster_indx, 
 
     lasso_features = coefs["Importance"].sort_values(ascending=False)
 
-    # Визуализация важности признаков 
     plt.figure(figsize=(15, 7))
     sns.barplot(lasso_features.index, lasso_features)
     plt.tight_layout()
@@ -145,7 +135,6 @@ def show_features_importances(model, features, n_splits, scoring, cluster_indx, 
     plt.title(f'Feate Importances Cluster {cluster_indx} CV MAE: {cv_mae} Alpha: {model[1].alpha_}');
 
 
-# Получение лагов целевой переменной 
 def get_lags(df, target_col_name, lag_start=1, lag_end=48, drop_target_col=True):
     """
     Computes lag features 
@@ -168,13 +157,11 @@ def get_lags(df, target_col_name, lag_start=1, lag_end=48, drop_target_col=True)
     for i in range(lag_start, lag_end+1):
         features_df[f"lag_{i}"] = features_df[target_col_name].shift(i)
     features_df = features_df.dropna(axis='rows')
-    
     if drop_target_col:
         features_df = features_df.drop(columns=target_col_name)
     return features_df
 
 
-# Извлечение гармоник ряда 
 def get_harmonics(x_len, func, period, shift, factor):
     """
     Gets sin/cos harmonics 
@@ -198,7 +185,7 @@ def get_harmonics(x_len, func, period, shift, factor):
     else: f = np.cos
     return f(x * 2. * np.pi * float(factor)/float(period))
 
-# Получение готового DF признаков из гармоник 
+
 def get_harmonics_df(df, func='sin'):
     """
     Gets a DataFrame with harmonic features 
@@ -212,7 +199,7 @@ def get_harmonics_df(df, func='sin'):
     DataFrame
     """
     features_df = pd.DataFrame()
-    periods = [6, 12, 24, 168] # используемые периоды 
+    periods = [6, 12, 24, 168]
     for period in periods:
         for shift in range (0, int(period/2), 2):
             for factor in range (1, int(period/2 + 1), 3):
@@ -221,7 +208,7 @@ def get_harmonics_df(df, func='sin'):
     features_df.index = df.index
     return features_df
 
-# Понижение признакового пространства (PCA)
+
 def downsize_features_pca(df, seed):
     """
     Downsizes features using PCA 
@@ -244,7 +231,6 @@ def downsize_features_pca(df, seed):
     return res_df
 
 
-# Получение признаков на скользящем окне 
 def get_rolling_window_features(series, target_col_name, window_size=[12, 24], statistics=['avg'], drop_target_col=False):
     """
     Computes provided statistics using a rolling window
@@ -283,7 +269,6 @@ def get_rolling_window_features(series, target_col_name, window_size=[12, 24], s
     return res_df
 
 
-# Получение признаков на расширяющемся окне 
 def get_expanding_window_features(series, target_col_name, window_size=[12, 24], statistics=['avg'], drop_target_col=False):
     """
     Computes provided statistics using a expanding window

@@ -2,7 +2,6 @@ import numpy as np
 from sklearn.metrics import r2_score
 
 
-# Вычисление метрики MAPE
 def mean_absolute_percentage_error(y_true, y_pred, **kwargs): 
     """
     Calculates adjusted MAPE metric
@@ -18,7 +17,6 @@ def mean_absolute_percentage_error(y_true, y_pred, **kwargs):
     return np.mean(np.abs((y_true - y_pred) / y_true)) * 100
 
 
-# Вычисление скоректированного R2
 def adjusted_rsquare(y_true, y_pred, X, **kwargs):
     """
     Calculates adjusted R2

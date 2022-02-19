@@ -11,7 +11,7 @@ from tqdm.autonotebook import tqdm
 sns.set_style("darkgrid")
 warnings.filterwarnings('ignore')
 
-# Получение результатов кластеризации KMeans с визуализацией
+
 def get_kmeans_results(data, max_clusters=10, metric='euclidean', seed=23):
     """
     Runs KMeans n times (according to max_cluster range)
@@ -28,7 +28,6 @@ def get_kmeans_results(data, max_clusters=10, metric='euclidean', seed=23):
     -------
     None      
     """
-    # Значения метрик 
     distortions = []
     silhouette = []
     clusters_range = range(1, max_clusters+1)
@@ -40,7 +39,6 @@ def get_kmeans_results(data, max_clusters=10, metric='euclidean', seed=23):
         if K > 1:
             silhouette.append(silhouette_score(data, kmeans_model.labels_))
         
-    # Рисуем 
     plt.figure(figsize=(10,4))
     plt.plot(clusters_range, distortions, 'bx-')
     plt.xlabel('k')
@@ -68,14 +66,11 @@ def predict_cluster_labels(cluster_model, dim_red_algo, data):
     --------
     np.array 
     """
-    # Подготовка и масштабирование рядов 
     cluster_data = data.pivot(index='PULocationID', columns='tpep_pickup_datetime', values='n_trips').T
-    scaler = StandardScaler() # т.к. каждый ряд масштабируется отдельно, то нет необходимости в методе transform
+    scaler = StandardScaler() 
     scaled_cluster_data = scaler.fit_transform(cluster_data).T
     
-    # Признаки MDS для рядов 
     data_down = dim_red_algo.fit_transform(scaled_cluster_data) 
     
-    # Предсказываем кластеры 
     cluster_labels = cluster_model.predict(data_down)
     return cluster_labels

@@ -7,7 +7,7 @@ from scipy.cluster.hierarchy import dendrogram
 
 sns.set_style("darkgrid")
 
-# Визуализация временного ряда 
+
 def plot_series(series, city_zone=230):
     """
     Plots a time series graph 
@@ -20,14 +20,12 @@ def plot_series(series, city_zone=230):
     -------
     None 
     """
-
     plt.figure(figsize=(16,5))
     plt.grid(True)
     plt.title(f'N_Trips in {city_zone}')
     sns.lineplot(x='tpep_pickup_datetime', y='n_trips', data=series.reset_index(), legend=False);
 
 
-# Визуализация декомпозиции временного ряда 
 def plot_decomposition(series, figsize = (12, 9), grid=True):
     """
     Plots Time Series decomposition
@@ -42,10 +40,8 @@ def plot_decomposition(series, figsize = (12, 9), grid=True):
     -------
     None
     """
-
     ts_compnts = sm.tsa.seasonal_decompose(series)
     titles = ['Origianl', 'Trend', 'Seasonal', 'Resid']
-
     fig, ax = plt.subplots(nrows=4, ncols=1,figsize=figsize)
     plt.tight_layout()
     ax[0].set_title('Time Series Decomposition')
@@ -53,12 +49,11 @@ def plot_decomposition(series, figsize = (12, 9), grid=True):
     ax[1].plot(ts_compnts.trend)
     ax[2].plot(ts_compnts.seasonal)
     ax[3].plot(ts_compnts.resid)
-    
     for indx, title in enumerate(titles):
         ax[indx].set_ylabel(title)
         ax[indx].grid(grid)
 
-# Визуализация автокорреляционной и частной автокорреляционной функций 
+
 def plot_acf_pacf(series, lags=30, figsize=(12, 7)):
     """
     Plots autocorrelation and partial autocorrelation functions 
@@ -73,18 +68,15 @@ def plot_acf_pacf(series, lags=30, figsize=(12, 7)):
     -------
     None
     """
-
     plt.figure(figsize=figsize)
     ax = plt.subplot(211)
     sm.graphics.tsa.plot_acf(series.values, lags=lags, ax=ax)
     plt.grid(True)
-    
     ax = plt.subplot(212)
     sm.graphics.tsa.plot_pacf(series.values, lags=lags, ax=ax)
     plt.grid(True)
 
 
-# Визуализация всех рядов в кластере 
 def plot_cluster_ts(current_cluster):
     """
     Plots time serieses in a cluster 
@@ -95,23 +87,19 @@ def plot_cluster_ts(current_cluster):
     -------
     None 
     """
-
     fig, ax = plt.subplots(
         int(np.ceil(current_cluster.shape[0]/4)),4,
         figsize=(45, 3*int(np.ceil(current_cluster.shape[0]/4)))
     )
     fig.autofmt_xdate(rotation=45)
     ax = ax.reshape(-1)
-    
     for indx, series in enumerate(current_cluster):
         ax[indx].plot(series)
         plt.xticks(rotation=45)
-
     plt.tight_layout()
     plt.show();
 
 
-# Визуализация полученных кластеров     
 def plot_clusters(data, cluster_model, dim_red_algo):
     """
     Plots clusters obtained by clustering model 
@@ -126,27 +114,25 @@ def plot_clusters(data, cluster_model, dim_red_algo):
     -------
     None
     """
-
     cluster_labels = cluster_model.fit_predict(data)
     centroids = cluster_model.cluster_centers_
     u_labels = np.unique(cluster_labels)
     
-    # Рисуем центроиды 
+    # Centroids 
     plt.figure(figsize=(16, 10))
     plt.scatter(centroids[:, 0] , centroids[:, 1] , s=150, color='r', marker="x")
     
-    # Понижаем многомерные данные для визуализации в 2D
+    # Downsize data into 2D
     if data.shape[1] > 2:
         data_2d = dim_red_algo.fit_transform(data)
         for u_label in u_labels:
             cluster_points = data[(cluster_labels == u_label)]
             plt.scatter(cluster_points[:, 0], cluster_points[:, 1], label=u_label)
-    # Если уже понижены 
+    # If features are already downsized
     else:
         for u_label in u_labels:
             cluster_points = data[(cluster_labels == u_label)]
-            plt.scatter(cluster_points[:, 0], cluster_points[:, 1], label=u_label)
-            
+            plt.scatter(cluster_points[:, 0], cluster_points[:, 1], label=u_label)     
     plt.title('Clustered Data')
     plt.xlabel("Feature space for the 1st feature")
     plt.ylabel("Feature space for the 2nd feature")
@@ -154,7 +140,6 @@ def plot_clusters(data, cluster_model, dim_red_algo):
     plt.legend(title='Cluster Labels');
 
 
-# Визуализация дендограммы 
 def plot_dendrogram(data, model, figsize=(16,10), **kwargs):
     """
     Plots a dendogram using HAC 
@@ -169,7 +154,6 @@ def plot_dendrogram(data, model, figsize=(16,10), **kwargs):
     -------
     None 
     """
-
     model.fit(data)
     counts = np.zeros(model.children_.shape[0])
     n_samples = len(model.labels_)
@@ -181,7 +165,6 @@ def plot_dendrogram(data, model, figsize=(16,10), **kwargs):
             else:
                 current_count += counts[child_idx - n_samples]
         counts[i] = current_count
-
     linkage_matrix = np.column_stack([model.children_, model.distances_, counts]).astype(float)
     
     plt.figure(figsize=figsize, dpi=200)
