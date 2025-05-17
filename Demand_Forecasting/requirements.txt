@@ -1,0 +1,13 @@
+numpy
+pandas
+matplotlib
+seaborn
+tqdm
+scikit-learn
+tensorflow==2.13.1
+keras
+plotly
+nbformat
+streamlit
+joblib
+tqdm

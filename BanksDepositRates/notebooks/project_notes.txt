@@ -1,0 +1,49 @@
+# Виртуальое Окружение в Python
+
+# установка virtual
+pip isntall virtual env
+
+# создание виртуальной среды
+virtualenv <name>
+
+# активация виртуальной среды
+source/bin/activate
+
+# установка зависимсотей проекта
+pip install -r requirements.txt
+
+# деактивация виртуальной среды
+deactivate
+
+# docker
+docker ps -a # показывает все контейнеры
+docker ps # показывает только активыне контейнеры
+docker compose up -d # создает сервис, используя различные контейнеры
+
+# airflow (docker) -> https://airflow.apache.org/docs/apache-airflow/stable/howto/docker-compose/index.html
+
+1. Запустить команду в терминале (Получаем docker-compose):
+    curl -LfO 'https://airflow.apache.org/docs/apache-airflow/2.10.3/docker-compose.yaml'
+
+2. Изменяем, скаченный docker-compose
+    2.1 AIRFLOW__CORE__EXECUTOR: LocalExecutor
+    2.2 Удаляем переменные из docker-compose, связанные с CELERY
+        - AIRFLOW__CELERY__RESULT_BACKEND
+        - AIRFLOW__CELERY__BROKER_URL
+    2.3 Удаляем зависимости CELERY:
+        - Удаляем Redis + зависимости от Redis
+        - Удаляем airflow-worker и 
+
+3. Создать файл конфигурации для docker-compose.yaml
+    - На Linux обязательно указать
+        - AIRFLOW_UID -> echo -e "AIRFLOW_UID=$(id -u)" > .env
+    - Определить переменные для паролей, логинов -> скрыть все чувствительные данные
+        
+4. Запустить команду в терминале
+    4.1 docker compose up airflow-init -> initializes database
+    4.2 docker compose up -> deploy full airflow service
+
+
+
+
+pip install git+https://github.com/Aleksey-Asap/BanksDepositRates@bot

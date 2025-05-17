@@ -1,0 +1,31 @@
+[project]
+name = "bank_rates"
+version = "0.1.0"
+description = "App to check credit rates of russian banks from a sravni ru"
+readme = "README.md"
+authors = [
+    {name = "Vladislav Raskoshinskii", email = "vladrask.ds@gmail.com"}
+]
+dependencies = [
+    "pandas",
+    "requests",
+    "openpyxl",
+    "sqlalchemy",
+    "python-dotenv",
+    "telebot",
+    "psycopg2-binary",
+    "matplotlib"
+]
+
+requires-python = ">=3.10" 
+
+[project.urls]
+repository = "https://github.com/Aleksey-Asap/BanksDepositRates"
+
+[build-system]
+requires = ["setuptools>=42", "wheel"]
+build-backend = "setuptools.build_meta"
+
+# If using setuptools, make sure this section is correctly defined
+[tool.setuptools]
+packages = ["data_scraper", "telegram_bot"]
